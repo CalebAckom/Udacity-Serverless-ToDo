@@ -4,16 +4,12 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 
-import { getTodosForUser as getTodosForUser } from '../../businessLogic/todos'
-import { getUserId } from '../utils';
-
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const userId = getUserId(event)
-    const items = await getTodosForUser(userId);
+    // Write your code here
     return {
       statusCode: 200,
-      body: JSON.stringify({ items })
+      body: JSON.stringify({ message: "This is a test endpoint" })
     }
   }
 )
