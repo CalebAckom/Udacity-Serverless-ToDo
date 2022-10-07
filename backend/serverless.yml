@@ -2,16 +2,19 @@
 org: calebackom
 app: serverless-todo-app
 service: serverless-todo-app
+# configValidationMode: error
 
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
 
 provider:
   name: aws
   runtime: nodejs16.x
-  lambdaHashingVersion: '20201221'
+  memorySize: 8192
+  # lambdaHashingVersion: '20201221'
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -24,7 +27,7 @@ provider:
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
     PROJECT_NAME: udacity
-    TODOS_TABLE: udacity-serverless-application-todo-${self:provider.stage}
+    TODOS_TABLE: todos-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
     ATTACHMENT_S3_BUCKET: caleb-udacity-serverless-application-todo-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
@@ -38,31 +41,23 @@ provider:
 package:
   individually: true
 
-logs:
-  # Enabling API Gateway Logs
-  restApi: true
+# logs:
+#   # Enabling API Gateway Logs
+#   restApi: true
 
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
-
-  Test:
-    handler: src/lambda/http/test.handler
-    events:
-      - http:
-        method: get
-        path: todos
-        cors: true
   
   GetTodos:
     handler: src/lambda/http/getTodos.handler
     events:
       - http:
-        method: get
-        path: todos
-        cors: true
-        authorizer:
-          name: Auth
+          method: get
+          path: todos
+          cors: true
+          authorizer:
+            name: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
