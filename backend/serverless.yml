@@ -7,6 +7,7 @@ service: serverless-todo-app
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-plugin-tracing
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
 
@@ -15,6 +16,8 @@ provider:
   runtime: nodejs16.x
   memorySize: 8192
   # lambdaHashingVersion: '20201221'
+  apiGateway:
+    minimumCompressionSize: 1024
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -37,6 +40,43 @@ provider:
       customAuthorizer:
         type: request
         functionName: Auth
+
+custom:
+  documentation:
+    api:
+      info:
+        version: '1.0.0'
+        title: Serverless todo API
+        description: Serverless todo application for record keeping
+    models:
+      - name: CreateTodoRequest
+        contentType: "application/json"
+        schema:
+          required:
+            - name
+            - dueDate
+          properties:
+            name:
+              minLength: 1
+              type: string
+            dueDate:
+              type: string
+      - name: UpdateTodoRequest
+        contentType: "application/json"
+        schema:
+          required:
+            - name
+            - dueDate
+            - done
+          properties:
+            name:
+              minLength: 1
+              type: string
+            dueDate:
+              type: string
+            done:
+              type: boolean
+
 
 package:
   individually: true
@@ -71,11 +111,14 @@ functions:
           method: post
           path: todos
           cors: true
-          authorizer:
-            name: Auth
+          authorizer: Auth
+          # reqValidator: RequestBodyValidator
           request:
-            schema:
-              application/json: ${file(models/create-todo-model.json)}
+            schemas:
+              application/json:
+                schema: ${file(models/create-todo-model.json)}
+                name: CreateToDo
+                description: 'Create ToDo Validation'
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -108,8 +151,8 @@ functions:
           method: delete
           path: todos/{todoId}
           cors: true
-          authorizer:
-            name: Auth
+          authorizer: Auth
+          # reqValidator: RequestBodyValidator
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -126,8 +169,11 @@ functions:
           authorizer:
             name: Auth
           request:
-            schema:
-              application/json: ${file(models/update-todo-model.json)}
+            schemas:
+              application/json:
+                schema: ${file(models/update-todo-model.json)}
+                name: UpdateRequest
+                description: 'Update ToDo Validation'
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -197,3 +243,12 @@ resources:
               Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
         Bucket:
           Ref: TodoAttachmentsBucket
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId: 
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false

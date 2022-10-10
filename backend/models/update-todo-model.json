@@ -5,7 +5,8 @@
   "properties": {
     "name": {
       "type": "string",
-      "minLength": 5
+      "minLength": 1,
+      "maxLength": 999
     },
     "dueDate": {
       "type": "string"
@@ -14,10 +15,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "dueDate",
-    "done"
-  ],
+  "required": ["name", "dueDate", "done"],
   "additionalProperties": false
 }
